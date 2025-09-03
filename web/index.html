@@ -73,8 +73,75 @@
                     </div>
                 </div>
 
+                <div class="widget simulator-widget">
+                    <h2>Configuração do Simulador</h2>
+                    <div class="simulator-config">
+                        <div class="config-row">
+                            <div class="control-group">
+                                <label for="device-name">Nome do Dispositivo:</label>
+                                <input type="text" id="device-name" value="DAQ_SIM_001">
+                            </div>
+                            <div class="control-group">
+                                <label for="sensor-count">Número de Sensores:</label>
+                                <input type="number" id="sensor-count" min="1" max="8" value="3">
+                            </div>
+                        </div>
+                        <div class="config-row">
+                            <div class="control-group">
+                                <label for="sampling-rate">Taxa de Amostragem (Hz):</label>
+                                <input type="number" id="sampling-rate" min="1" max="10000" value="1000">
+                            </div>
+                            <div class="control-group">
+                                <label for="scenario-select">Cenário de Simulação:</label>
+                                <select id="scenario-select">
+                                    <option value="static_load">Carga Estática</option>
+                                    <option value="dynamic_load">Carga Dinâmica</option>
+                                    <option value="vibration">Vibração</option>
+                                    <option value="field_work_light" selected>Trabalho Campo (Leve)</option>
+                                    <option value="field_work_heavy">Trabalho Campo (Pesado)</option>
+                                    <option value="stress_test">Teste de Stress</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="config-row">
+                            <div class="control-group">
+                                <label for="noise-level">Nível de Ruído:</label>
+                                <input type="range" id="noise-level" min="0" max="0.5" step="0.01" value="0.05">
+                                <span id="noise-value">5%</span>
+                            </div>
+                            <div class="control-group">
+                                <label for="amplitude">Amplitude (µε):</label>
+                                <input type="number" id="amplitude" min="10" max="5000" value="500" step="10">
+                            </div>
+                        </div>
+                        <div class="config-row">
+                            <div class="control-group">
+                                <label>
+                                    <input type="checkbox" id="enable-ble" checked>
+                                    Habilitar Bluetooth LE
+                                </label>
+                            </div>
+                            <div class="control-group">
+                                <label>
+                                    <input type="checkbox" id="enable-wifi">
+                                    Habilitar WiFi
+                                </label>
+                            </div>
+                        </div>
+                        <div class="simulator-actions">
+                            <button id="start-sim-advanced" class="btn primary">Iniciar Simulador</button>
+                            <button id="stop-sim" class="btn secondary">Parar Simulador</button>
+                            <button id="sim-status-btn" class="btn">Status</button>
+                        </div>
+                        <div id="simulator-info" class="simulator-info">
+                            <h3>Status do Simulador</h3>
+                            <div id="sim-details"></div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="widget controls-widget">
-                    <h2>Controles</h2>
+                    <h2>Controles do Osciloscópio</h2>
                     <div class="controls-grid">
                         <div class="control-group">
                             <label for="sample-rate-input">Taxa de Amostragem (Hz):</label>
