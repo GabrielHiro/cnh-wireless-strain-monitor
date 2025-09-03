@@ -14,6 +14,7 @@ class DAQSystem {
         this.setupEventListeners();
         this.initializePlot();
         this.updateStatus();
+        this.initializeSimulator();
         
         console.log('DAQ System initialized');
         this.addLogEntry('Sistema inicializado', 'success');
@@ -32,6 +33,21 @@ class DAQSystem {
         this.clearBtn = document.getElementById('clear-btn');
         this.exportCsvBtn = document.getElementById('export-csv-btn');
         this.exportJsonBtn = document.getElementById('export-json-btn');
+        
+        // Simulator controls
+        this.startSimAdvanced = document.getElementById('start-sim-advanced');
+        this.stopSim = document.getElementById('stop-sim');
+        this.simStatusBtn = document.getElementById('sim-status-btn');
+        this.deviceName = document.getElementById('device-name');
+        this.sensorCount = document.getElementById('sensor-count');
+        this.samplingRate = document.getElementById('sampling-rate');
+        this.scenarioSelect = document.getElementById('scenario-select');
+        this.noiseLevel = document.getElementById('noise-level');
+        this.noiseValue = document.getElementById('noise-value');
+        this.amplitude = document.getElementById('amplitude');
+        this.enableBle = document.getElementById('enable-ble');
+        this.enableWifi = document.getElementById('enable-wifi');
+        this.simDetails = document.getElementById('sim-details');
         
         // Controls
         this.sensorSelect = document.getElementById('sensor-select');
@@ -56,6 +72,18 @@ class DAQSystem {
         // Connection controls
         this.connectBtn.addEventListener('click', () => this.toggleConnection());
         this.startSimBtn.addEventListener('click', () => this.toggleSimulator());
+        
+        // Advanced simulator controls
+        this.startSimAdvanced.addEventListener('click', () => this.startSimulatorAdvanced());
+        this.stopSim.addEventListener('click', () => this.stopSimulator());
+        this.simStatusBtn.addEventListener('click', () => this.checkSimulatorStatus());
+        
+        // Simulator config updates
+        this.noiseLevel.addEventListener('input', (e) => {
+            this.noiseValue.textContent = Math.round(e.target.value * 100) + '%';
+        });
+        
+        this.scenarioSelect.addEventListener('change', () => this.updateScenarioDescription());
         
         // Plot controls
         this.sensorSelect.addEventListener('change', (e) => {
@@ -199,6 +227,167 @@ class DAQSystem {
             console.error('Erro ao controlar simulador:', error);
             this.addLogEntry('Erro ao iniciar simulador', 'error');
         }
+    }
+
+    async startSimulatorAdvanced() {
+        try {
+            const config = {
+                device_name: this.deviceName.value,
+                sensor_count: parseInt(this.sensorCount.value),
+                sampling_rate_hz: parseFloat(this.samplingRate.value),
+                scenario: this.scenarioSelect.value,
+                noise_level: parseFloat(this.noiseLevel.value),
+                amplitude: parseFloat(this.amplitude.value),
+                enable_ble: this.enableBle.checked,
+                enable_wifi: this.enableWifi.checked
+            };
+
+            this.addLogEntry(`Iniciando simulador: ${config.device_name}`, 'info');
+            this.updateSimulatorIndicator('starting');
+
+            const response = await fetch('/api/v1/simulator/start', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(config)
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                this.addLogEntry('Simulador iniciado com configuração avançada', 'success');
+                this.updateSimulatorStatus('running');
+                this.updateSimulatorIndicator('running');
+                this.displaySimulatorConfig(config);
+            } else {
+                throw new Error(`HTTP ${response.status}`);
+            }
+        } catch (error) {
+            console.error('Erro ao iniciar simulador:', error);
+            this.addLogEntry('Erro ao iniciar simulador avançado', 'error');
+            this.updateSimulatorIndicator('stopped');
+        }
+    }
+
+    async stopSimulator() {
+        try {
+            const response = await fetch('/api/v1/simulator/stop', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                this.addLogEntry('Simulador parado', 'warning');
+                this.updateSimulatorStatus('stopped');
+                this.updateSimulatorIndicator('stopped');
+                this.clearSimulatorDisplay();
+            } else {
+                throw new Error(`HTTP ${response.status}`);
+            }
+        } catch (error) {
+            console.error('Erro ao parar simulador:', error);
+            this.addLogEntry('Erro ao parar simulador', 'error');
+        }
+    }
+
+    async checkSimulatorStatus() {
+        try {
+            const response = await fetch('/api/v1/simulator/status');
+            
+            if (response.ok) {
+                const status = await response.json();
+                this.displaySimulatorStatus(status);
+                this.addLogEntry('Status do simulador atualizado', 'info');
+            } else {
+                throw new Error(`HTTP ${response.status}`);
+            }
+        } catch (error) {
+            console.error('Erro ao verificar status:', error);
+            this.addLogEntry('Erro ao verificar status do simulador', 'error');
+        }
+    }
+
+    updateSimulatorIndicator(status) {
+        const indicators = document.querySelectorAll('.status-indicator');
+        indicators.forEach(indicator => {
+            indicator.className = `status-indicator ${status}`;
+        });
+    }
+
+    displaySimulatorConfig(config) {
+        const scenarios = {
+            'static_load': 'Carga Estática - Simulação de peso constante',
+            'dynamic_load': 'Carga Dinâmica - Variações de peso contínuas',
+            'vibration': 'Vibração - Oscilações de alta frequência',
+            'field_work_light': 'Trabalho Campo Leve - Simulação de uso normal',
+            'field_work_heavy': 'Trabalho Campo Pesado - Simulação de uso intenso',
+            'stress_test': 'Teste de Stress - Simulação de condições extremas'
+        };
+
+        this.simDetails.innerHTML = `
+            <div><span class="status-indicator running"></span><strong>Status:</strong> Executando</div>
+            <div><strong>Dispositivo:</strong> ${config.device_name}</div>
+            <div><strong>Sensores:</strong> ${config.sensor_count}</div>
+            <div><strong>Taxa Amostragem:</strong> ${config.sampling_rate_hz} Hz</div>
+            <div><strong>Cenário:</strong> ${scenarios[config.scenario] || config.scenario}</div>
+            <div><strong>Amplitude:</strong> ${config.amplitude} µε</div>
+            <div><strong>Ruído:</strong> ${Math.round(config.noise_level * 100)}%</div>
+            <div><strong>Bluetooth LE:</strong> ${config.enable_ble ? 'Habilitado' : 'Desabilitado'}</div>
+            <div><strong>WiFi:</strong> ${config.enable_wifi ? 'Habilitado' : 'Desabilitado'}</div>
+        `;
+    }
+
+    displaySimulatorStatus(status) {
+        if (status.running) {
+            this.simDetails.innerHTML = `
+                <div><span class="status-indicator running"></span><strong>Status:</strong> Executando</div>
+                <div><strong>Tempo Ativo:</strong> ${status.uptime || 'N/A'}</div>
+                <div><strong>Amostras Enviadas:</strong> ${status.samples_sent || 0}</div>
+                <div><strong>Taxa Atual:</strong> ${status.current_rate || 0} Hz</div>
+                <div><strong>Último Valor:</strong> ${status.last_value || 0} µε</div>
+            `;
+            this.updateSimulatorIndicator('running');
+        } else {
+            this.clearSimulatorDisplay();
+            this.updateSimulatorIndicator('stopped');
+        }
+    }
+
+    clearSimulatorDisplay() {
+        this.simDetails.innerHTML = `
+            <div><span class="status-indicator stopped"></span><strong>Status:</strong> Parado</div>
+            <div>Simulador não está executando</div>
+        `;
+    }
+
+    updateScenarioDescription() {
+        const scenario = this.scenarioSelect.value;
+        const descriptions = {
+            'static_load': 'Simula peso constante aplicado ao sensor',
+            'dynamic_load': 'Simula variações contínuas de peso',
+            'vibration': 'Simula oscilações de alta frequência',
+            'field_work_light': 'Simula condições normais de trabalho',
+            'field_work_heavy': 'Simula condições de trabalho pesado',
+            'stress_test': 'Simula condições extremas de operação'
+        };
+
+        // Atualizar amplitude baseada no cenário
+        const amplitudes = {
+            'static_load': 100,
+            'dynamic_load': 300,
+            'vibration': 50,
+            'field_work_light': 500,
+            'field_work_heavy': 1000,
+            'stress_test': 2000
+        };
+
+        if (amplitudes[scenario]) {
+            this.amplitude.value = amplitudes[scenario];
+        }
+
+        this.addLogEntry(`Cenário selecionado: ${descriptions[scenario]}`, 'info');
     }
 
     handleIncomingData(data) {
@@ -401,6 +590,21 @@ class DAQSystem {
         if (config.sample_rate) {
             this.sampleRateInput.value = config.sample_rate;
         }
+    }
+
+    initializeSimulator() {
+        // Inicializar display do simulador
+        this.clearSimulatorDisplay();
+        this.updateScenarioDescription();
+        
+        // Sincronizar taxa de amostragem
+        this.samplingRate.value = this.sampleRateInput.value;
+        this.sampleRateInput.addEventListener('input', (e) => {
+            this.samplingRate.value = e.target.value;
+        });
+        this.samplingRate.addEventListener('input', (e) => {
+            this.sampleRateInput.value = e.target.value;
+        });
     }
 }
 
