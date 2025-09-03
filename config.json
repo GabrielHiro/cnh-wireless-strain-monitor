@@ -1,0 +1,95 @@
+{
+  "server_port": "8080",
+  "database_path": "data/daq.db",
+  "sample_rate": 1000,
+  "buffer_size": 10000,
+  "simulator_config": {
+    "enabled": true,
+    "sensors": [
+      {
+        "id": "strain_gauge_1",
+        "type": "strain_gauge",
+        "name": "Strain Gauge Channel 1",
+        "description": "Primary strain gauge sensor",
+        "unit": "microstrain",
+        "sample_rate": 1000,
+        "calibration": {
+          "offset": 0.0,
+          "scale": 1.0,
+          "sensitivity": 2.0
+        },
+        "noise_config": {
+          "enabled": true,
+          "amplitude": 0.1,
+          "frequency": 50.0
+        },
+        "signal_config": {
+          "waveform": "sine",
+          "amplitude": 100.0,
+          "frequency": 10.0,
+          "offset": 50.0
+        }
+      },
+      {
+        "id": "strain_gauge_2",
+        "type": "strain_gauge",
+        "name": "Strain Gauge Channel 2",
+        "description": "Secondary strain gauge sensor",
+        "unit": "microstrain",
+        "sample_rate": 1000,
+        "calibration": {
+          "offset": 0.0,
+          "scale": 1.0,
+          "sensitivity": 2.0
+        },
+        "noise_config": {
+          "enabled": true,
+          "amplitude": 0.05,
+          "frequency": 60.0
+        },
+        "signal_config": {
+          "waveform": "square",
+          "amplitude": 75.0,
+          "frequency": 5.0,
+          "offset": 25.0
+        }
+      },
+      {
+        "id": "load_cell_1",
+        "type": "load_cell",
+        "name": "Load Cell",
+        "description": "HX711-based load cell",
+        "unit": "kg",
+        "sample_rate": 80,
+        "calibration": {
+          "offset": 0.0,
+          "scale": 0.001,
+          "sensitivity": 1.0
+        },
+        "noise_config": {
+          "enabled": true,
+          "amplitude": 0.01,
+          "frequency": 10.0
+        },
+        "signal_config": {
+          "waveform": "triangular",
+          "amplitude": 5.0,
+          "frequency": 2.0,
+          "offset": 10.0
+        }
+      }
+    ],
+    "update_interval_ms": 1,
+    "buffer_size": 5000,
+    "enable_networking": true,
+    "wifi_config": {
+      "ssid": "DAQ_Network",
+      "password": "daq123456",
+      "ip": "192.168.1.100"
+    },
+    "ble_config": {
+      "device_name": "DAQ_Simulator",
+      "service_uuid": "12345678-1234-1234-1234-123456789abc"
+    }
+  }
+}
