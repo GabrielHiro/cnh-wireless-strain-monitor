@@ -114,11 +114,12 @@ body {
 .dashboard {
     display: grid;
     grid-template-columns: 2fr 1fr;
-    grid-template-rows: auto auto auto;
+    grid-template-rows: auto auto auto auto;
     gap: 20px;
     grid-template-areas:
         "oscilloscope metrics"
         "oscilloscope sensors"
+        "simulator simulator"
         "controls log";
 }
 
@@ -135,6 +136,102 @@ body {
     margin-bottom: 15px;
     border-bottom: 2px solid var(--secondary-color);
     padding-bottom: 5px;
+}
+
+/* Simulator Widget */
+.simulator-widget {
+    grid-area: simulator;
+}
+
+.simulator-config {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.config-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.simulator-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+.btn.primary {
+    background: var(--success-color);
+}
+
+.btn.primary:hover {
+    background: #219a52;
+}
+
+.btn.secondary {
+    background: var(--accent-color);
+}
+
+.btn.secondary:hover {
+    background: #c0392b;
+}
+
+.simulator-info {
+    margin-top: 15px;
+    padding: 15px;
+    background: var(--background-color);
+    border-radius: 5px;
+    border-left: 4px solid var(--secondary-color);
+}
+
+.simulator-info h3 {
+    color: var(--primary-color);
+    font-size: 1rem;
+    margin-bottom: 10px;
+}
+
+#sim-details {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+    color: var(--text-color);
+}
+
+.control-group input[type="range"] {
+    width: 100%;
+}
+
+#noise-value {
+    font-weight: bold;
+    color: var(--secondary-color);
+    margin-left: 10px;
+}
+
+.control-group label input[type="checkbox"] {
+    margin-right: 8px;
+}
+
+.status-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+
+.status-indicator.running {
+    background: var(--success-color);
+    animation: pulse 2s infinite;
+}
+
+.status-indicator.stopped {
+    background: var(--accent-color);
+}
+
+.status-indicator.starting {
+    background: var(--warning-color);
+    animation: pulse 1s infinite;
 }
 
 /* Oscilloscope Widget */
@@ -314,8 +411,13 @@ body {
             "oscilloscope"
             "metrics"
             "sensors"
+            "simulator"
             "controls"
             "log";
+    }
+    
+    .config-row {
+        grid-template-columns: 1fr;
     }
 }
 
@@ -340,6 +442,14 @@ body {
     
     .controls-grid {
         grid-template-columns: 1fr;
+    }
+    
+    .config-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .simulator-actions {
+        flex-direction: column;
     }
     
     .controls {
