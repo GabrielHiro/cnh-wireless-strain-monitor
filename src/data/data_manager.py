@@ -585,11 +585,153 @@ class DataExporter:
             raise DataStorageError(f"Erro ao exportar Excel: {e}")
 
 
+class OscilloscopeStreamer:
+    """
+    Streamer de dados otimizado para visualização tipo osciloscópio.
+    
+    Fornece dados em formato otimizado para gráficos em tempo real.
+    """
+    
+    def __init__(self, max_points: int = 1000):
+        """
+        Inicializa o streamer de osciloscópio.
+        
+        Args:
+            max_points: Número máximo de pontos a manter na janela
+        """
+        self._data_streams: Dict[str, List[Dict]] = {}
+        self._max_points = max_points
+        self._lock = threading.Lock()
+        
+    def add_reading(self, reading: StrainReading) -> None:
+        """
+        Adiciona leitura ao stream de osciloscópio.
+        
+        Args:
+            reading: Leitura do sensor
+        """
+        with self._lock:
+            # Inicializa stream do sensor se não existir
+            if reading.sensor_id not in self._data_streams:
+                self._data_streams[reading.sensor_id] = []
+            
+            # Converte timestamp para valor numérico (ms desde epoch)
+            time_ms = reading.timestamp.timestamp() * 1000
+            
+            # Formato otimizado para gráficos
+            data_point = {
+                't': time_ms,                    # Timestamp em ms
+                'v': reading.strain_value,       # Valor principal
+                'r': reading.raw_adc_value,      # Valor ADC bruto
+                'b': reading.battery_level,      # Bateria
+                'temp': reading.temperature      # Temperatura
+            }
+            
+            stream = self._data_streams[reading.sensor_id]
+            stream.append(data_point)
+            
+            # Mantém apenas os últimos N pontos
+            if len(stream) > self._max_points:
+                stream.pop(0)
+    
+    def get_stream_data(self, sensor_id: str, last_n: Optional[int] = None) -> List[Dict]:
+        """
+        Retorna dados do stream para um sensor.
+        
+        Args:
+            sensor_id: ID do sensor
+            last_n: Número de pontos mais recentes (None = todos)
+            
+        Returns:
+            Lista de pontos de dados
+        """
+        with self._lock:
+            if sensor_id not in self._data_streams:
+                return []
+            
+            stream = self._data_streams[sensor_id]
+            
+            if last_n is not None:
+                return stream[-last_n:]
+            
+            return stream.copy()
+    
+    def get_all_streams(self) -> Dict[str, List[Dict]]:
+        """
+        Retorna todos os streams ativos.
+        
+        Returns:
+            Dict com sensor_id como chave e lista de pontos como valor
+        """
+        with self._lock:
+            return {
+                sensor_id: stream.copy() 
+                for sensor_id, stream in self._data_streams.items()
+            }
+    
+    def get_latest_values(self) -> Dict[str, Dict]:
+        """
+        Retorna os valores mais recentes de todos os sensores.
+        
+        Returns:
+            Dict com valores mais recentes por sensor
+        """
+        with self._lock:
+            latest = {}
+            for sensor_id, stream in self._data_streams.items():
+                if stream:
+                    latest[sensor_id] = stream[-1]
+            return latest
+    
+    def clear_stream(self, sensor_id: str) -> None:
+        """
+        Limpa stream de um sensor específico.
+        
+        Args:
+            sensor_id: ID do sensor
+        """
+        with self._lock:
+            if sensor_id in self._data_streams:
+                self._data_streams[sensor_id].clear()
+    
+    def clear_all_streams(self) -> None:
+        """Limpa todos os streams."""
+        with self._lock:
+            self._data_streams.clear()
+    
+    def get_stream_stats(self) -> Dict[str, Any]:
+        """
+        Retorna estatísticas dos streams ativos.
+        
+        Returns:
+            Estatísticas dos streams
+        """
+        with self._lock:
+            stats = {
+                'active_sensors': len(self._data_streams),
+                'total_points': sum(len(stream) for stream in self._data_streams.values()),
+                'sensors': {}
+            }
+            
+            for sensor_id, stream in self._data_streams.items():
+                if stream:
+                    values = [point['v'] for point in stream]
+                    stats['sensors'][sensor_id] = {
+                        'points': len(stream),
+                        'latest_time': stream[-1]['t'],
+                        'min_value': min(values),
+                        'max_value': max(values),
+                        'avg_value': sum(values) / len(values)
+                    }
+            
+            return stats
+
+
 class DataManager:
     """
     Gerenciador principal de dados do sistema DAQ.
     
-    Coordena buffer em memória, persistência em banco e exportação.
+    Coordena buffer em memória, persistência em banco, exportação e streaming.
     """
     
     def __init__(self):
@@ -600,6 +742,7 @@ class DataManager:
         )
         self.database = DatabaseManager()
         self.exporter = DataExporter()
+        self.oscilloscope_streamer = OscilloscopeStreamer()
         
         # Controle de flush automático
         self._auto_flush_enabled = True
@@ -615,6 +758,9 @@ class DataManager:
         # Adiciona ao buffer
         self.buffer.add_reading(reading)
         
+        # Adiciona ao streamer de osciloscópio
+        self.oscilloscope_streamer.add_reading(reading)
+        
         # Verifica se precisa fazer flush
         if self.buffer.should_flush():
             self._flush_buffer()
@@ -627,6 +773,10 @@ class DataManager:
             readings: Lista de leituras
         """
         self.buffer.add_readings(readings)
+        
+        # Adiciona ao streamer também
+        for reading in readings:
+            self.oscilloscope_streamer.add_reading(reading)
         
         if self.buffer.should_flush():
             self._flush_buffer()
@@ -737,6 +887,41 @@ class DataManager:
         
         return self.database.cleanup_old_data(days)
     
+    def get_oscilloscope_data(self, sensor_id: Optional[str] = None, 
+                             last_n: Optional[int] = None) -> Union[List[Dict], Dict[str, List[Dict]]]:
+        """
+        Retorna dados formatados para visualização em osciloscópio.
+        
+        Args:
+            sensor_id: ID do sensor específico (None = todos)
+            last_n: Número de pontos mais recentes
+            
+        Returns:
+            Dados formatados para osciloscópio
+        """
+        if sensor_id is not None:
+            return self.oscilloscope_streamer.get_stream_data(sensor_id, last_n)
+        else:
+            return self.oscilloscope_streamer.get_all_streams()
+    
+    def get_realtime_values(self) -> Dict[str, Dict]:
+        """
+        Retorna valores em tempo real de todos os sensores.
+        
+        Returns:
+            Valores mais recentes por sensor
+        """
+        return self.oscilloscope_streamer.get_latest_values()
+    
+    def get_stream_statistics(self) -> Dict[str, Any]:
+        """
+        Retorna estatísticas dos streams de dados.
+        
+        Returns:
+            Estatísticas dos streams ativos
+        """
+        return self.oscilloscope_streamer.get_stream_stats()
+    
     def get_statistics(self, sensor_id: Optional[str] = None) -> Dict[str, Any]:
         """
         Retorna estatísticas dos dados.
@@ -776,6 +961,9 @@ class DataManager:
         """Encerra o gerenciador de dados."""
         # Flush final do buffer
         self._flush_buffer()
+        
+        # Limpa streams
+        self.oscilloscope_streamer.clear_all_streams()
         
         # Fecha banco de dados
         self.database.close()

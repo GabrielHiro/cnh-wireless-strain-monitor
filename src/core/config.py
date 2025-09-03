@@ -65,6 +65,13 @@ class SystemConfig:
     SIMULATOR_NOISE_LEVEL: float = 0.1  # % de ruído nos dados simulados
     SIMULATOR_DRIFT_RATE: float = 0.001  # deriva por segundo
     SIMULATOR_BATTERY_DRAIN_RATE: float = 0.001  # % por segundo em operação
+    
+    # Osciloscópio/Visualização
+    OSCILLOSCOPE_MAX_POINTS: int = 1000  # pontos máximos por sensor
+    OSCILLOSCOPE_TIME_WINDOW: float = 10.0  # segundos
+    OSCILLOSCOPE_UPDATE_RATE: float = 50.0  # Hz
+    STREAMING_BUFFER_SIZE: int = 100  # pontos por update
+    WEBSOCKET_HEARTBEAT: int = 30  # segundos
 
 
 # Instância global da configuração
@@ -107,4 +114,44 @@ COMMUNICATION_CONFIG = {
     'connection_keepalive': 30,  # segundos
     'packet_timeout': 5.0,  # segundos
     'max_packet_size': 512  # bytes
+}
+
+# Configurações específicas do osciloscópio
+OSCILLOSCOPE_CONFIG = {
+    'default': {
+        'time_window_seconds': 10.0,
+        'max_points': 1000,
+        'sample_rate_hz': 100.0,
+        'auto_scale': True,
+        'decimation_factor': 1
+    },
+    'high_performance': {
+        'time_window_seconds': 5.0,
+        'max_points': 500,
+        'sample_rate_hz': 200.0,
+        'auto_scale': True,
+        'decimation_factor': 2
+    },
+    'long_term': {
+        'time_window_seconds': 60.0,
+        'max_points': 2000,
+        'sample_rate_hz': 50.0,
+        'auto_scale': True,
+        'decimation_factor': 1
+    }
+}
+
+# Configurações de streaming
+STREAMING_CONFIG = {
+    'websocket': {
+        'heartbeat_interval': 30,
+        'max_clients': 10,
+        'buffer_size': 100,
+        'compression': True
+    },
+    'api': {
+        'rate_limit': 50,  # requests per second
+        'cache_ttl': 1,    # segundos
+        'max_points_per_request': 2000
+    }
 }
