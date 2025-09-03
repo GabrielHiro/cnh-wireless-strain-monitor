@@ -1,0 +1,124 @@
+{
+  "_comment": "Configuração de exemplo para o Sistema DAQ",
+  "_description": "Este arquivo demonstra todas as opções disponíveis de configuração",
+  
+  "system": {
+    "device_name": "DAQ_Sistema_v1",
+    "description": "Sistema de aquisição para análise de fadiga",
+    "location": "Campo de Testes",
+    "operator": "Nome do Operador"
+  },
+  
+  "simulation": {
+    "auto_start": true,
+    "simulation_speed": 1.0,
+    "realistic_loads": true,
+    "noise_enabled": true,
+    "drift_simulation": false,
+    "initial_scenario": "idle"
+  },
+  
+  "sensor": {
+    "sensor_id": "HX711_001",
+    "sample_rate": 10,
+    "filter_enabled": true,
+    "filter_cutoff": 5.0,
+    "calibration_factor": 1.0,
+    "gain": 128,
+    "offset_compensation": true,
+    "temperature_compensation": true
+  },
+  
+  "communication": {
+    "ble": {
+      "enabled": true,
+      "service_uuid": "12345678-1234-5678-9ABC-123456789ABC",
+      "device_name": "DAQ_Sensor",
+      "advertising_interval": 100,
+      "connection_timeout": 30
+    },
+    "wifi": {
+      "enabled": false,
+      "ssid": "DAQ_Network",
+      "password": "password123",
+      "host_ip": "192.168.1.100",
+      "port": 8080
+    }
+  },
+  
+  "data": {
+    "buffer_size": 1000,
+    "auto_export": false,
+    "export_format": "csv",
+    "export_interval": 3600,
+    "data_retention_days": 30,
+    "compression_enabled": true
+  },
+  
+  "scenarios": {
+    "idle": {
+      "base_strain": 0,
+      "noise_amplitude": 10,
+      "frequency_components": [0.1, 0.5],
+      "battery_drain_rate": 0.001
+    },
+    "transport": {
+      "base_strain": 0,
+      "noise_amplitude": 50,
+      "frequency_components": [2.0, 5.0, 10.0],
+      "battery_drain_rate": 0.002
+    },
+    "field_work_light": {
+      "base_strain": 100,
+      "noise_amplitude": 200,
+      "frequency_components": [0.5, 2.0, 8.0],
+      "battery_drain_rate": 0.003
+    },
+    "field_work_heavy": {
+      "base_strain": 300,
+      "noise_amplitude": 500,
+      "frequency_components": [1.0, 3.0, 12.0],
+      "battery_drain_rate": 0.005
+    },
+    "harvest": {
+      "base_strain": 500,
+      "noise_amplitude": 800,
+      "frequency_components": [1.5, 4.0, 15.0],
+      "battery_drain_rate": 0.007
+    },
+    "overload": {
+      "base_strain": 800,
+      "noise_amplitude": 1200,
+      "frequency_components": [0.8, 2.5, 20.0],
+      "battery_drain_rate": 0.010
+    }
+  },
+  
+  "gui": {
+    "theme": "default",
+    "update_interval": 100,
+    "plot_max_points": 500,
+    "auto_scale": true,
+    "show_statistics": true,
+    "window_size": [1200, 800],
+    "window_position": [100, 100]
+  },
+  
+  "logging": {
+    "level": "INFO",
+    "file_enabled": true,
+    "console_enabled": true,
+    "max_file_size": "10MB",
+    "backup_count": 5,
+    "format": "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  },
+  
+  "advanced": {
+    "performance_monitoring": false,
+    "memory_usage_limit": "500MB",
+    "cpu_usage_limit": 80,
+    "network_timeout": 30,
+    "retry_attempts": 3,
+    "graceful_shutdown_timeout": 10
+  }
+}
