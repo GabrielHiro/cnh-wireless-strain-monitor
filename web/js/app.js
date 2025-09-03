@@ -173,7 +173,7 @@ class DAQSystem {
 
     async toggleSimulator() {
         try {
-            const response = await fetch('/api/simulator/start', {
+            const response = await fetch('/api/v1/simulator/start', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -319,7 +319,7 @@ class DAQSystem {
 
     async exportData(format) {
         try {
-            const response = await fetch(`/api/data/export/${format}?sensorId=${this.selectedSensor}`);
+            const response = await fetch(`/api/v1/data/export/${format}?sensorId=${this.selectedSensor}`);
             if (response.ok) {
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
@@ -360,14 +360,14 @@ class DAQSystem {
     async loadInitialData() {
         try {
             // Load sensors list
-            const sensorsResponse = await fetch('/api/sensors');
+            const sensorsResponse = await fetch('/api/v1/sensors');
             if (sensorsResponse.ok) {
                 const sensors = await sensorsResponse.json();
                 this.updateSensorsList(sensors);
             }
             
             // Load initial configuration
-            const configResponse = await fetch('/api/config');
+            const configResponse = await fetch('/api/v1/config');
             if (configResponse.ok) {
                 const config = await configResponse.json();
                 this.applyConfiguration(config);
