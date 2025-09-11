@@ -1,1 +1,41 @@
+# Ignore Python files
+*.py
+*.pyc
+__pycache__/
+
+# Ignore Go build artifacts
+*.exe
+*.out
+*.test
+*.log
+*.tmp
+
+# Ignore dependency directories
+vendor/
+node_modules/
+
+# Ignore IDE/editor settings
+.vscode/
+.idea/
+*.swp
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore build and temporary files
+build/
+*.bak
+*.old
+*.orig
+*.rej
+*.swo
+*.swp
+
+# Ignore documentation artifacts
+*.pdf
+*.docx
+*.pptx
+
+# Ignore implementation summary
 IMPLEMENTATION_SUMMARY.md

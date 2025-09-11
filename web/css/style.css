@@ -1,0 +1,403 @@
+/* Sistema DAQ - Estilos CSS */
+
+:root {
+    --primary-color: #2c3e50;
+    --secondary-color: #3498db;
+    --accent-color: #e74c3c;
+    --success-color: #27ae60;
+    --warning-color: #f39c12;
+    --background-color: #ecf0f1;
+    --surface-color: #ffffff;
+    --text-color: #2c3e50;
+    --text-light: #7f8c8d;
+    --border-color: #bdc3c7;
+    --shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+    line-height: 1.6;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Header */
+.header {
+    background: var(--surface-color);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.header h1 {
+    color: var(--primary-color);
+    font-size: 1.8rem;
+    margin: 0;
+}
+
+.status-bar {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.status {
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.status:nth-child(1) {
+    background: var(--accent-color);
+    color: white;
+}
+
+.status:nth-child(2) {
+    background: var(--warning-color);
+    color: white;
+}
+
+.status.connected {
+    background: var(--success-color) !important;
+}
+
+.status.running {
+    background: var(--success-color) !important;
+}
+
+/* Buttons */
+.btn {
+    background: var(--secondary-color);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: background 0.3s ease;
+}
+
+.btn:hover {
+    background: #2980b9;
+}
+
+.btn.small {
+    padding: 5px 12px;
+    font-size: 0.8rem;
+}
+
+.btn:disabled {
+    background: var(--border-color);
+    cursor: not-allowed;
+}
+
+/* Dashboard Grid */
+.dashboard {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 20px;
+    grid-template-areas:
+        "oscilloscope metrics"
+        "oscilloscope sensors"
+        "controls log";
+}
+
+.widget {
+    background: var(--surface-color);
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: var(--shadow);
+}
+
+.widget h2 {
+    color: var(--primary-color);
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    border-bottom: 2px solid var(--secondary-color);
+    padding-bottom: 5px;
+}
+
+/* Oscilloscope Widget */
+.oscilloscope-widget {
+    grid-area: oscilloscope;
+    min-height: 400px;
+}
+
+.controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.plot-container {
+    height: 350px;
+    border: 1px solid var(--border-color);
+    border-radius: 5px;
+    background: #fafafa;
+}
+
+/* Metrics Widget */
+.metrics-widget {
+    grid-area: metrics;
+}
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.metric {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.metric-label {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+.metric-value {
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--secondary-color);
+}
+
+/* Sensors Widget */
+.sensors-widget {
+    grid-area: sensors;
+}
+
+.sensors-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.sensor-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background: var(--background-color);
+    border-radius: 5px;
+    border-left: 4px solid var(--secondary-color);
+}
+
+.sensor-name {
+    font-weight: 500;
+}
+
+.sensor-value {
+    font-weight: bold;
+    color: var(--secondary-color);
+}
+
+.sensor-unit {
+    font-size: 0.8rem;
+    color: var(--text-light);
+}
+
+/* Controls Widget */
+.controls-widget {
+    grid-area: controls;
+}
+
+.controls-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.control-group label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.control-group input,
+.control-group select {
+    padding: 8px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: 0.9rem;
+}
+
+.control-group input:focus,
+.control-group select:focus {
+    outline: none;
+    border-color: var(--secondary-color);
+}
+
+/* Log Widget */
+.log-widget {
+    grid-area: log;
+}
+
+.log-container {
+    height: 150px;
+    background: #2c3e50;
+    color: #ecf0f1;
+    border-radius: 5px;
+    padding: 10px;
+    overflow-y: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 0.8rem;
+}
+
+.log-entry {
+    margin-bottom: 5px;
+    padding: 2px 0;
+}
+
+.log-entry:before {
+    content: '[' attr(data-time) '] ';
+    color: var(--warning-color);
+}
+
+.log-entry.error {
+    color: var(--accent-color);
+}
+
+.log-entry.success {
+    color: var(--success-color);
+}
+
+.log-entry.warning {
+    color: var(--warning-color);
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    padding: 20px;
+    color: var(--text-light);
+    font-size: 0.9rem;
+    margin-top: 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .dashboard {
+        grid-template-columns: 1fr;
+        grid-template-areas:
+            "oscilloscope"
+            "metrics"
+            "sensors"
+            "controls"
+            "log";
+    }
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+    
+    .header {
+        flex-direction: column;
+        gap: 15px;
+        text-align: center;
+    }
+    
+    .status-bar {
+        justify-content: center;
+    }
+    
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .controls-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .controls .btn {
+        width: 100%;
+    }
+}
+
+/* Animações */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.pulsing {
+    animation: pulse 2s infinite;
+}
+
+/* Tooltip */
+.tooltip {
+    position: relative;
+    cursor: help;
+}
+
+.tooltip:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--primary-color);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    z-index: 1000;
+}
+
+/* Scrollbar personalizada */
+.log-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.log-container::-webkit-scrollbar-track {
+    background: #34495e;
+}
+
+.log-container::-webkit-scrollbar-thumb {
+    background: var(--secondary-color);
+    border-radius: 3px;
+}
+
+.log-container::-webkit-scrollbar-thumb:hover {
+    background: #2980b9;
+}
