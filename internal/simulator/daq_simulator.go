@@ -135,6 +135,7 @@ func (ds *DAQSimulator) Start(config Config) error {
 	ds.config = config
 	ds.running = true
 	ds.startTime = time.Now()
+	ds.stopChan = make(chan struct{}) // Recria o canal
 
 	// Cria sensores
 	ds.sensors = make([]*SensorSimulator, config.SensorCount)
@@ -168,7 +169,10 @@ func (ds *DAQSimulator) Stop() {
 
 	if ds.running {
 		ds.running = false
-		close(ds.stopChan)
+		if ds.stopChan != nil {
+			close(ds.stopChan)
+			ds.stopChan = nil
+		}
 	}
 }
 
