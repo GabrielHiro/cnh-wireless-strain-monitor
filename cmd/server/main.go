@@ -99,6 +99,9 @@ func (s *Server) setupRoutes() *mux.Router {
 	// Health check
 	api.HandleFunc("/health", s.healthHandler).Methods("GET")
 
+	// Configuration
+	api.HandleFunc("/config", s.getConfig).Methods("GET")
+
 	// Oscilloscope API
 	oscilloscope := api.PathPrefix("/oscilloscope").Subrouter()
 	oscilloscope.HandleFunc("/trace/{sensorId}", s.getTraceData).Methods("GET")
@@ -141,6 +144,11 @@ func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
+}
+
+func (s *Server) getConfig(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(s.config)
 }
 
 func (s *Server) getTraceData(w http.ResponseWriter, r *http.Request) {
@@ -266,10 +274,19 @@ func (s *Server) startSimulator(w http.ResponseWriter, r *http.Request) {
 		config = simulator.DefaultConfig()
 	}
 
+	// Para o simulador se já estiver rodando
+	if s.simulator.IsRunning() {
+		s.simulator.Stop()
+		time.Sleep(100 * time.Millisecond) // Aguarda um pouco para parar completamente
+	}
+
 	if err := s.simulator.Start(config); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	// Inicia streaming de dados para o WebSocket
+	go s.streamSimulatorData()
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"status": "started"})
@@ -287,6 +304,29 @@ func (s *Server) getSimulatorStatus(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(status)
+}
+
+func (s *Server) streamSimulatorData() {
+	s.simulator.StreamData(func(reading *models.StrainReading) {
+		// Envia leitura para o data manager
+		s.dataManager.AddReading(reading)
+
+		// Broadcast para clientes WebSocket
+		message := models.WebSocketMessage{
+			Type: "strain_reading",
+			Data: map[string]interface{}{
+				"sensor_id":    reading.SensorID,
+				"strain_value": reading.StrainValue,
+				"timestamp":    reading.Timestamp.UnixMilli(),
+				"raw_adc":      reading.RawADCValue,
+				"battery":      reading.BatteryLevel,
+				"temperature":  reading.Temperature,
+			},
+		}
+
+		// Envia para todos os clientes
+		s.wsHub.BroadcastMessage(message)
+	})
 }
 
 func (s *Server) Start(port string) error {
@@ -311,6 +351,24 @@ func (s *Server) Start(port string) error {
 
 	// Start data manager background tasks
 	go s.dataManager.Start()
+
+	// Inicia simulador automaticamente com configuração padrão
+	simConfig := simulator.Config{
+		DeviceName:     "DAQ_SIM_001",
+		SensorCount:    3,
+		SamplingRateHz: float64(s.config.SampleRate),
+		Scenario:       "field_work_light",
+		NoiseLevel:     0.05,
+		EnableBLE:      true,
+		EnableWiFi:     false,
+	}
+
+	if err := s.simulator.Start(simConfig); err == nil {
+		log.Println("Simulador iniciado automaticamente")
+		go s.streamSimulatorData()
+	} else {
+		log.Printf("Erro ao iniciar simulador: %v", err)
+	}
 
 	log.Printf("DAQ Server starting on port %s", port)
 	log.Printf("WebSocket endpoint: ws://localhost:%s/ws", port)
