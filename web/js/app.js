@@ -4,7 +4,7 @@ class DAQSystem {
         this.websocket = null;
         this.isConnected = false;
         this.isPaused = false;
-        this.selectedSensor = 'strain_gauge_1';
+        this.selectedSensor = 'DAQ_SIM_001_SENSOR_001'; // Match simulator sensor ID
         this.dataBuffer = new Map();
         this.maxBufferSize = 1000;
         this.plotData = [];
@@ -164,8 +164,18 @@ class DAQSystem {
             
             this.websocket.onmessage = (event) => {
                 try {
-                    const data = JSON.parse(event.data);
-                    this.handleIncomingData(data);
+                    // As mensagens podem vir concatenadas com \n
+                    const messages = event.data.trim().split('\n');
+                    messages.forEach(msgStr => {
+                        if (msgStr.trim()) {
+                            try {
+                                const data = JSON.parse(msgStr);
+                                this.handleIncomingData(data);
+                            } catch (err) {
+                                console.error('Erro ao parsear mensagem:', msgStr, err);
+                            }
+                        }
+                    });
                 } catch (error) {
                     console.error('Erro ao processar dados:', error);
                     this.addLogEntry('Erro ao processar dados recebidos', 'error');
@@ -390,30 +400,62 @@ class DAQSystem {
         this.addLogEntry(`Cenário selecionado: ${descriptions[scenario]}`, 'info');
     }
 
-    handleIncomingData(data) {
-        if (!this.isPaused && data.sensor_id === this.selectedSensor) {
-            // Adicionar dados ao buffer
-            if (!this.dataBuffer.has(data.sensor_id)) {
-                this.dataBuffer.set(data.sensor_id, []);
-            }
-            
-            const buffer = this.dataBuffer.get(data.sensor_id);
-            const timestamp = new Date(data.timestamp).getTime() / 1000;
-            
-            buffer.push({
-                x: timestamp,
-                y: data.value,
-                timestamp: data.timestamp
-            });
-            
-            // Limitar tamanho do buffer
-            if (buffer.length > this.maxBufferSize) {
-                buffer.shift();
-            }
-            
-            this.updatePlot();
-            this.updateMetrics(data);
+    handleIncomingData(message) {
+        // A mensagem vem com estrutura {type: "...", data: {...}}
+        if (!message || !message.type) return;
+        
+        switch (message.type) {
+            case 'welcome':
+                console.log('Conectado ao servidor:', message.data);
+                break;
+                
+            case 'strain_reading':
+                this.processStrainReading(message.data);
+                break;
+                
+            case 'realtime_snapshot':
+                this.processSnapshot(message.data);
+                break;
+                
+            default:
+                console.log('Tipo de mensagem desconhecido:', message.type);
         }
+    }
+    
+    processStrainReading(data) {
+        if (!data || !data.sensor_id) return;
+        if (this.isPaused || data.sensor_id !== this.selectedSensor) return;
+        
+        // Adicionar dados ao buffer
+        if (!this.dataBuffer.has(data.sensor_id)) {
+            this.dataBuffer.set(data.sensor_id, []);
+        }
+        
+        const buffer = this.dataBuffer.get(data.sensor_id);
+        const timestamp = data.timestamp / 1000; // Convert from ms to seconds
+        const strainValue = data.strain_value || 0;
+        
+        buffer.push({
+            x: timestamp,
+            y: strainValue,
+            timestamp: data.timestamp,
+            raw_adc: data.raw_adc,
+            battery: data.battery,
+            temperature: data.temperature
+        });
+        
+        // Limitar tamanho do buffer
+        if (buffer.length > this.maxBufferSize) {
+            buffer.shift();
+        }
+        
+        this.updatePlot();
+        this.updateMetrics(data);
+    }
+    
+    processSnapshot(data) {
+        // Processa snapshot em tempo real
+        console.log('Snapshot recebido:', data);
     }
 
     updatePlot() {
@@ -435,7 +477,7 @@ class DAQSystem {
     }
 
     updateMetrics(data) {
-        if (!this.dataBuffer.has(data.sensor_id)) return;
+        if (!data || !data.sensor_id || !this.dataBuffer.has(data.sensor_id)) return;
         
         const buffer = this.dataBuffer.get(data.sensor_id);
         const values = buffer.map(point => point.y);
@@ -454,8 +496,11 @@ class DAQSystem {
         const sampleRate = timeDiff > 0 ? (1 / timeDiff).toFixed(1) : '0';
         this.lastUpdate = now;
         
+        // Get current strain value
+        const currentValue = data.strain_value || 0;
+        
         // Update displays
-        this.currentStrain.textContent = data.value.toFixed(2);
+        this.currentStrain.textContent = currentValue.toFixed(2);
         this.minValue.textContent = min.toFixed(2);
         this.maxValue.textContent = max.toFixed(2);
         this.rmsValue.textContent = rms.toFixed(2);
