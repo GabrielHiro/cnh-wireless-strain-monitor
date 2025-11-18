@@ -1,6 +1,6 @@
 # Dockerfile para Sistema DAQ Go/C
 # Build stage
-FROM golang:1.21-alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 # Instalar dependências para compilação C
 RUN apk add --no-cache gcc musl-dev make
@@ -45,7 +45,7 @@ WORKDIR /app
 # Copiar binários e arquivos necessários
 COPY --from=builder /app/daq-server .
 COPY --from=builder /app/simulators/libhx711_simulator.so ./simulators/
-COPY --from=builder /app/config_example.json ./config.json
+COPY --from=builder /app/config.json ./config.json
 COPY --from=builder /app/web ./web
 
 # Configurar usuário
