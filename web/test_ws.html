@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teste WebSocket</title>
+</head>
+<body>
+    <h1>Teste WebSocket DAQ</h1>
+    <div id="status">Desconectado</div>
+    <div id="messages" style="border: 1px solid #ccc; padding: 10px; margin-top: 10px; height: 400px; overflow-y: scroll;"></div>
+    
+    <script>
+        const statusDiv = document.getElementById('status');
+        const messagesDiv = document.getElementById('messages');
+        
+        function addMessage(msg) {
+            const p = document.createElement('p');
+            p.textContent = new Date().toLocaleTimeString() + ': ' + msg;
+            messagesDiv.appendChild(p);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        
+        addMessage('Tentando conectar...');
+        const ws = new WebSocket('ws://localhost:8082/ws');
+        
+        ws.onopen = () => {
+            statusDiv.textContent = 'Conectado!';
+            statusDiv.style.color = 'green';
+            addMessage('✅ WebSocket conectado');
+        };
+        
+        ws.onmessage = (event) => {
+            addMessage('📨 Recebido: ' + event.data.substring(0, 200));
+            try {
+                const messages = event.data.trim().split('\n');
+                messages.forEach(msgStr => {
+                    if (msgStr.trim()) {
+                        const data = JSON.parse(msgStr);
+                        addMessage('📦 Tipo: ' + data.type + ' | Dados: ' + JSON.stringify(data.data).substring(0, 100));
+                    }
+                });
+            } catch (e) {
+                addMessage('❌ Erro ao parsear: ' + e.message);
+            }
+        };
+        
+        ws.onerror = (error) => {
+            statusDiv.textContent = 'Erro';
+            statusDiv.style.color = 'red';
+            addMessage('❌ Erro: ' + error);
+        };
+        
+        ws.onclose = () => {
+            statusDiv.textContent = 'Desconectado';
+            statusDiv.style.color = 'gray';
+            addMessage('⛔ WebSocket fechado');
+        };
+    </script>
+</body>
+</html>
