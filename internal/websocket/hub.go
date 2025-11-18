@@ -205,6 +205,11 @@ func (h *Hub) broadcastMessage(message models.WebSocketMessage) {
 	}
 }
 
+// BroadcastMessage método público para broadcast de mensagens
+func (h *Hub) BroadcastMessage(message models.WebSocketMessage) {
+	h.broadcastMessage(message)
+}
+
 // Métodos do Client
 
 // readPump bombeia mensagens da conexão WebSocket para o hub
